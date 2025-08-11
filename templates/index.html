@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIL CV Analyzer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="icon" href="static/favicon.ico" type="image/x-icon">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.5.0/mammoth.browser.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.14.305/pdf.min.js"></script>
+    
+    <link rel="stylesheet" href="{{ url_for('static', filename='index.css') }}">
+</head>
+<body class="text-slate-800 bg-slate-50">
+
+    <div class="flex h-screen">
+        <aside id="sidebar" class="w-96 bg-white border-r border-slate-200 flex flex-col p-6">
+            <header class="mb-8">
+                 <img src="static/logo.png" alt="" srcset="" class="mb-6 h-16 w-26">
+                 <h1 class="text-2xl font-extrabold text-slate-900 bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-500">SIL CV Analyzer</h1>
+                 <p class="text-sm text-slate-500 mt-1">Next-Gen Recruitment Dashboard</p>
+            </header>
+            
+            <div id="upload-section" class="mb-6">
+                 <label for="folderInput" class="custom-file-upload rounded-lg block p-6 cursor-pointer text-center">
+                    <div class="flex flex-col items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="text-indigo-500 mb-2"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="M12 12v9"/><path d="m16 16-4-4-4 4"/></svg>
+                        <span class="font-semibold text-md text-indigo-700">Select CV Folder</span>
+                        <span class="text-xs text-slate-500 mt-1">Supports PDF and .docx files</span>
+                    </div>
+                 </label>
+                 <input type="file" id="folderInput" webkitdirectory directory multiple class="hidden">
+            </div>
+
+            <div id="processing-section" class="hidden flex-grow flex flex-col min-h-0">
+                <h2 class="text-lg font-bold text-slate-800 mb-3 flex-shrink-0">Processing Status</h2>
+                <div id="status-container" class="flex-grow overflow-y-auto border border-slate-200 rounded-lg bg-slate-50/50 p-2">
+                     <table class="w-full text-sm text-left">
+                        <tbody id="status-table-body" class="divide-y divide-slate-200"></tbody>
+                    </table>
+                </div>
+                 <div class="mt-6 text-center flex-shrink-0">
+                    <button id="downloadBtn" class="bg-gradient-to-br w-full from-indigo-600 to-purple-600 text-white font-bold py-3 px-6 rounded-lg shadow-lg hover:shadow-xl hover:scale-105 disabled:from-slate-400 disabled:to-slate-400 disabled:shadow-md disabled:cursor-not-allowed disabled:scale-100 transition-all" disabled>
+                        Download Excel Report
+                    </button>
+                    <p id="download-hint" class="text-xs text-slate-500 mt-2">Activates after first successful analysis.</p>
+                </div>
+            </div>
+        </aside>
+
+        <main id="main-content" class="flex-1 p-8 overflow-y-auto">
+             <div id="welcome-screen" class="h-full flex flex-col items-center justify-center text-center">
+                <svg class="w-24 h-24 text-slate-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                <h2 class="text-2xl font-bold text-slate-700">Ready to Analyze</h2>
+                <p class="text-slate-500 mt-2 max-w-md">Select a folder of resumes using the panel on the left to begin the AI-powered analysis and matching process.</p>
+            </div>
+            
+            <div id="results-dashboard" class="hidden">
+                <div id="comparison-section" class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 mb-8">
+                    <h2 class="text-xl font-bold mb-4 text-slate-800">Job Description Matcher</h2>
+                    <div>
+                        <label for="jd-upload-input" class="block mb-2 font-semibold text-slate-700">Upload Job Description</label>
+                        <input type="file" id="jd-upload-input" class="w-full p-3 border-slate-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 transition" accept=".pdf,.docx">
+                        <div id="jd-file-name" class="text-sm text-slate-500 mt-2"></div>
+                    </div>
+                    <div class="mt-4 text-right">
+                         <button id="compareBtn" class="bg-gradient-to-br from-green-500 to-emerald-600 text-white font-bold py-2.5 px-6 rounded-lg shadow-md hover:shadow-lg hover:scale-105 disabled:from-slate-400 disabled:to-slate-400 disabled:shadow-md disabled:cursor-not-allowed disabled:scale-100 transition-all">
+                            Find Top Candidates
+                        </button>
+                    </div>
+                     <div id="comparison-results-container" class="mt-6"></div>
+                </div>
+
+                <div>
+                     <h2 class="text-xl font-bold mb-4 text-slate-800">Processed Candidates</h2>
+                     <div id="candidate-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                        </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div id="modal-container" class="fixed inset-0 bg-black bg-opacity-60 hidden items-center justify-center p-4 z-50">
+        <div id="modal-content" class="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+            <header class="p-4 border-b border-slate-200 flex justify-between items-center flex-shrink-0">
+                <h3 id="modal-name" class="text-xl font-bold text-slate-800">Candidate Details</h3>
+                <button id="modal-close-btn" class="text-slate-500 hover:text-slate-800 transition-colors">&times;</button>
+            </header>
+            <div id="modal-body" class="p-6 overflow-y-auto">
+                </div>
+        </div>
+    </div>
+    
+    <script src="{{ url_for('static', filename='index.js') }}"></script>
+</body>
+</html>
